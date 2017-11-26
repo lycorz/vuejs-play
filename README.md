@@ -1,4 +1,4 @@
-# vue-simple
+# vuejs-play
 
 > A Vue.js project
 
