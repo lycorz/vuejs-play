@@ -13,7 +13,7 @@
         <th> </th>
       </thead>
       <tbody>
-        <tr v-for="(row, i) in list">
+        <tr v-for="(row, i) in display">
           <template>
             <td v-for="column in columns">
               <input type="text" v-model="row[column.name]" v-if="column.editable && isEdit(row)"/>
@@ -28,7 +28,12 @@
         </tr>
       </tbody>
     </table>
-</div>
+    <div class="v-paginator">
+      <button class="btn btn-outline-primary" v-on:click="pagination('previous')">Previous</button>
+      <span>Page {{current}} of {{end}}</span>
+      <button class="btn btn-outline-primary" v-on:click="pagination('next')">Next</button>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -40,6 +45,11 @@ export default {
     apiUrl: {
       type: String,
       required: true
+    },
+    rows: {
+      type: Number,
+      default: 5,
+      required: false
     },
     columns: {
       type: Array,
@@ -58,6 +68,7 @@ export default {
             var column = that.columns[i];
             if(column.searchable){
               searchable = searchable.concat(el[column.name]);
+              searchable = searchable.concat(',');
             }
           }
 
@@ -70,6 +81,10 @@ export default {
       else {
         this.list = this.dataList;
       }
+
+      this.current = 1;
+      this.pagination();
+      this.$forceUpdate();
     }
   },
   data() {
@@ -78,17 +93,23 @@ export default {
       dataList: [],
       edit: [],
       search: "",
-      sort: {}
+      sort: {},
+      start: 1,
+      end: 1,
+      current: 1,
+      display: []
     }
   },
   mounted() {
-    this.sort = {
-      column: this.columns[0].name,
-      order: 1
-    }
     this.loadData();
   },
   methods: {
+    initialize: function() {
+      this.dataList = this.list;
+      this.sortColumn(this.columns[0]);
+      this.end = Math.ceil(this.list.length / this.rows);
+      this.pagination();
+    },
     getWidth: function(style) {
       return {width: style};
     },
@@ -104,11 +125,11 @@ export default {
       this.$forceUpdate();
     },
     loadData: function() {
+      var that = this;
       axios.get(this.apiUrl)
       .then(response => {
-        this.list = response.data;
-        this.dataList = this.list;
-        sortColumn(this.sort.column);
+        that.list = response.data;
+        that.initialize();
       })
       .catch(error => {
         console.log("error " + error);
@@ -119,6 +140,7 @@ export default {
       .then(response => {
         var index = this.list.indexOf(row);
         this.list.splice(index, 1);
+        this.pagination();
       })
       .catch(error => {
         console.log("error " + error);
@@ -148,7 +170,25 @@ export default {
         var result = (a[i] < b[i]) ? -1 : (a[i] > b[i]) ? 1 : 0;
         return result * that.sort.order;
       });
+
+      this.pagination();
       this.$forceUpdate();
+    },
+    pagination: function(action) {
+      var newList = [];
+      if (action === 'next') {
+        this.current = this.current+1;
+      }
+      else if (action === 'previous') {
+        this.current = this.current-1;
+      }
+      var current = this.current*this.rows;
+      for (let i = current-this.rows; i < current; i++) {
+        if(this.list[i]){
+          newList.push(this.list[i]);
+        }
+      }
+      this.display = newList;
     }
   }
 }

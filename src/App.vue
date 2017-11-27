@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <h1>{{ msg }}</h1>
-    <searchTable :apiUrl="url" :columns="columns"/>
+    <search-table :apiUrl="url" :rows="rows" :columns="columns"/>
   </div>
 </template>
 
@@ -11,12 +11,13 @@ import searchTable from './components/ui-search-table.vue';
 export default {
   name: 'app',
   components: {
-    searchTable
+    'search-table' : searchTable
   },
   data () {
     return {
       msg: 'Welcome to Your Vue.js App',
       url: 'http://localhost:3000/users/',
+      rows: 5,
       columns: [{title: 'Id', name: 'id', width: '20px', searchable: true},
                 {title: 'Username', name: 'username', width: '200px', searchable: true},
                 {title: 'Name', name: 'name', width: '200px',  searchable: true},
